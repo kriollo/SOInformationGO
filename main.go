@@ -21,19 +21,20 @@ type NetIPInfo struct {
 }
 
 type SystemInfo struct {
-	Hostname    string                 `json:"hostname"`
-	OS          string                 `json:"os"`
-	Platform    string                 `json:"platform"`
-	PlatformVer string                 `json:"platform_version"`
-	Arch        string                 `json:"arch"`
-	IPs         []NetIPInfo            `json:"ips"`
-	CPU         []cpu.InfoStat         `json:"cpu"`
-	CPUTimes    []cpu.TimesStat        `json:"cpu_times"`
-	CPUCores    int                    `json:"cpu_cores"`
-	Memory      *mem.VirtualMemoryStat `json:"memory"`
-	Disk        []disk.UsageStat       `json:"disk"`
-	Uptime      uint64                 `json:"uptime_seconds"`
-	BootTime    uint64                 `json:"boot_time"`
+	Hostname      string                 `json:"hostname"`
+	OS            string                 `json:"os"`
+	Platform      string                 `json:"platform"`
+	PlatformVer   string                 `json:"platform_version"`
+	Arch          string                 `json:"arch"`
+	KernelVersion string                 `json:"kernel_version,omitempty"`
+	IPs           []NetIPInfo            `json:"ips"`
+	CPU           []cpu.InfoStat         `json:"cpu"`
+	CPUTimes      []cpu.TimesStat        `json:"cpu_times"`
+	CPUCores      int                    `json:"cpu_cores"`
+	Memory        *mem.VirtualMemoryStat `json:"memory"`
+	Disk          []disk.UsageStat       `json:"disk"`
+	Uptime        uint64                 `json:"uptime_seconds"`
+	BootTime      uint64                 `json:"boot_time"`
 }
 
 func getSystemInfo() (*SystemInfo, error) {
@@ -105,20 +106,25 @@ func getSystemInfo() (*SystemInfo, error) {
 		}
 	}
 
+	kernel := ""
+	if hostInfo.OS == "linux" {
+		kernel = hostInfo.KernelVersion
+	}
 	return &SystemInfo{
-		Hostname:    hostInfo.Hostname,
-		OS:          hostInfo.OS,
-		Platform:    hostInfo.Platform,
-		PlatformVer: hostInfo.PlatformVersion,
-		Arch:        hostInfo.KernelArch,
-		IPs:         ips,
-		CPU:         cpuInfo,
-		CPUTimes:    cpuTimes,
-		CPUCores:    cpuCores,
-		Memory:      memInfo,
-		Disk:        diskUsages,
-		Uptime:      hostInfo.Uptime,
-		BootTime:    hostInfo.BootTime,
+		Hostname:      hostInfo.Hostname,
+		OS:            hostInfo.OS,
+		Platform:      hostInfo.Platform,
+		PlatformVer:   hostInfo.PlatformVersion,
+		Arch:          hostInfo.KernelArch,
+		KernelVersion: kernel,
+		IPs:           ips,
+		CPU:           cpuInfo,
+		CPUTimes:      cpuTimes,
+		CPUCores:      cpuCores,
+		Memory:        memInfo,
+		Disk:          diskUsages,
+		Uptime:        hostInfo.Uptime,
+		BootTime:      hostInfo.BootTime,
 	}, nil
 }
 
@@ -131,28 +137,57 @@ func writeHumanReadable(w io.Writer, info *SystemInfo) {
 	fmt.Fprintf(w, "OS: %s\n", info.OS)
 	fmt.Fprintf(w, "Platform: %s %s\n", info.Platform, info.PlatformVer)
 	fmt.Fprintf(w, "Arch: %s\n", info.Arch)
-
+	if info.KernelVersion != "" {
+		fmt.Fprintf(w, "Kernel: %s\n", info.KernelVersion)
+	}
 	fmt.Fprintf(w, "Uptime: %s\n", humanDuration(info.Uptime))
 	fmt.Fprintf(w, "Boot Time: %s\n", humanBootTime(info.BootTime))
+
+	// CPU Info
 	fmt.Fprintf(w, "\nCPU Info:\n")
-	for _, cpu := range info.CPU {
-		fmt.Fprintf(w, "  Model: %s, Cores: %d, Mhz: %.2f, Cache Size: %s\n", cpu.ModelName, cpu.Cores, cpu.Mhz, humanBytes(uint64(cpu.CacheSize)*1024))
+	if len(info.CPU) > 0 {
+		cpu := info.CPU[0]
+		fmt.Fprintf(w, "  %-15s: %s\n", "Modelo", cpu.ModelName)
+		fmt.Fprintf(w, "  %-15s: %d\n", "Cores físicos", cpu.Cores)
+		fmt.Fprintf(w, "  %-15s: %d\n", "Cores lógicos", info.CPUCores)
+		fmt.Fprintf(w, "  %-15s: %.2f MHz\n", "Frecuencia", cpu.Mhz)
+		fmt.Fprintf(w, "  %-15s: %s\n", "Cache", humanBytes(uint64(cpu.CacheSize)*1024))
 	}
-	fmt.Fprintf(w, "  Logical CPUs: %d\n", info.CPUCores)
+	if len(info.CPU) > 1 {
+		fmt.Fprintf(w, "\n  %-3s %-30s %-7s %-9s %-11s\n", "#", "Modelo", "Cores", "Mhz", "Cache")
+		for i, cpu := range info.CPU {
+			fmt.Fprintf(w, "  %-3d %-30s %-7d %-9.2f %-11s\n", i+1, cpu.ModelName, cpu.Cores, cpu.Mhz, humanBytes(uint64(cpu.CacheSize)*1024))
+		}
+	}
+
+	// Memory
 	fmt.Fprintf(w, "\nMemory:\n")
 	fmt.Fprintf(w, "  Total: %s\n", humanBytes(info.Memory.Total))
 	fmt.Fprintf(w, "  Used: %s\n", humanBytes(info.Memory.Used))
 	fmt.Fprintf(w, "  Free: %s\n", humanBytes(info.Memory.Available))
+
+	// Disks
 	fmt.Fprintf(w, "\nDisk(s):\n")
-	for _, d := range info.Disk {
+	if len(info.Disk) > 1 {
+		fmt.Fprintf(w, "  %-10s %-12s %-12s %-12s %-6s\n", "Mount", "Total", "Used", "Free", "FS")
+		for _, d := range info.Disk {
+			fmt.Fprintf(w, "  %-10s %-12s %-12s %-12s %-6s\n", d.Path, humanBytes(d.Total), humanBytes(d.Used), humanBytes(d.Free), d.Fstype)
+		}
+	} else if len(info.Disk) == 1 {
+		d := info.Disk[0]
 		fmt.Fprintf(w, "  Mount: %s, Total: %s, Used: %s, Free: %s, FS: %s\n", d.Path, humanBytes(d.Total), humanBytes(d.Used), humanBytes(d.Free), d.Fstype)
 	}
 
-	if len(info.IPs) > 0 {
+	// IPs activas
+	if len(info.IPs) > 1 {
 		fmt.Fprintf(w, "\nIPs activas:\n")
+		fmt.Fprintf(w, "  %-25s %-40s\n", "Interfaz", "IP")
 		for _, nip := range info.IPs {
-			fmt.Fprintf(w, "  %s: %s\n", nip.Interface, nip.IP)
+			fmt.Fprintf(w, "  %-25s %-40s\n", nip.Interface, nip.IP)
 		}
+	} else if len(info.IPs) == 1 {
+		nip := info.IPs[0]
+		fmt.Fprintf(w, "\nIPs activas:\n  %s: %s\n", nip.Interface, nip.IP)
 	}
 }
 
