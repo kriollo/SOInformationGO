@@ -1,4 +1,4 @@
-module systeminformation
+module systemInformation
 
 go 1.23
 
