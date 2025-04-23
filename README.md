@@ -14,7 +14,7 @@ Aplicación en Go para obtener información detallada del sistema donde se ejecu
 
 ## Novedades recientes
 
-- Opción `--json` para exportar la salida en formato JSON
+- Opción `--json` para exportar la salida en formato JSON (guarda en `systeminfo.json`)
 - Opción `--txt` para exportar la salida legible a un archivo `systeminfo.txt`
 - Detección y listado de IPs activas en las interfaces de red
 - Cabecera con nombre de la app, versión y autor
@@ -85,8 +85,8 @@ go build -o systeminfo main.go
 2. **Clona el repositorio o copia los archivos fuente**:
 
    ```bash
-   git clone <URL-del-repo>
-   cd systemInformation
+   git clone https://github.com/kriollo/SOInformationGO
+   cd SOInformationGO
    ```
 
 3. **Instala las dependencias:**
@@ -133,11 +133,10 @@ Uptime: 2d 3h 15m 42s
 Boot Time: 2025-04-21 13:05:01
 
 CPU Info:
-  Modelo         : Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
-  Cores físicos  : 4
-  Cores lógicos  : 8
-  Frecuencia     : 1992.00 MHz
-  Cache          : 6.00 MB
+  CPUs detectados: 8
+  Modelo                    Cores    MHz      ID
+  Intel(R) Core(TM)...      4        1992.00  0
+  Intel(R) Core(TM)...      4        1992.00  1
 
 Memory:
   Total: 15.57 GB
@@ -145,8 +144,9 @@ Memory:
   Free: 8.34 GB
 
 Disk(s):
-  /              100.00 GB   45.00 GB    55.00 GB   ext4
-  /home          400.00 GB   120.00 GB   280.00 GB  ext4
+  Mount      Total        Used         Free         FS
+  /          100.00 GB    45.00 GB     55.00 GB    ext4
+  /home      400.00 GB    120.00 GB    280.00 GB   ext4
 
 IPs activas:
   Interfaz                 IP

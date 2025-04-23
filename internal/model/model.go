@@ -1,5 +1,9 @@
 package model
 
+import "github.com/shirou/gopsutil/v4/cpu"
+import "github.com/shirou/gopsutil/v4/disk"
+import "github.com/shirou/gopsutil/v4/mem"
+
 // NetIPInfo representa una IP de una interfaz de red
  type NetIPInfo struct {
 	Interface string `json:"interface"`
@@ -15,11 +19,11 @@ package model
 	Arch          string      `json:"arch"`
 	KernelVersion string      `json:"kernel_version,omitempty"`
 	IPs           []NetIPInfo `json:"ips"`
-	CPU           interface{} `json:"cpu"`
-	CPUTimes      interface{} `json:"cpu_times"`
+	CPU           []cpu.InfoStat `json:"cpu"`
+	CPUTimes      []cpu.TimesStat `json:"cpu_times"`
 	CPUCores      int         `json:"cpu_cores"`
-	Memory        interface{} `json:"memory"`
-	Disk          interface{} `json:"disk"`
+	Memory        *mem.VirtualMemoryStat `json:"memory"`
+	Disk          []disk.UsageStat       `json:"disk"`
 	Uptime        uint64      `json:"uptime_seconds"`
 	BootTime      uint64      `json:"boot_time"`
 }
