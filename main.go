@@ -15,6 +15,11 @@ import (
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
+const (
+	AppName = "System Information App"
+	Version = "v1.0.2"
+)
+
 type NetIPInfo struct {
 	Interface string `json:"interface"`
 	IP        string `json:"ip"`
@@ -230,6 +235,11 @@ func humanBootTime(boot uint64) string {
 }
 
 func main() {
+	fmt.Printf("\n============================================\n")
+	fmt.Printf("  %s  |  Versión %s\n", AppName, Version)
+	fmt.Printf("  Desarrollado por jjara  |  https://github.com/jjara\n")
+	fmt.Printf("============================================\n\n")
+
 	jsonFlag := flag.Bool("json", false, "Exportar salida en formato JSON")
 	txtFlag := flag.Bool("txt", false, "Exportar salida legible a systeminfo.txt")
 	flag.Parse()

@@ -18,9 +18,9 @@ if (-not $Version) {
 
 # --- 2. Compilar binarios ---
 Write-Host "Compilando binario para Windows..."
-go build -o systeminfoGo.exe main.go
+go build -o build/systeminfoGo.exe main.go
 Write-Host "Compilando binario para Linux..."
-$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o systeminfoGo main.go
+$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o build/systeminfoGo main.go
 
 # --- 3. Generar CHANGELOG.md ---
 $changelogFile = "CHANGELOG.md"
@@ -55,7 +55,7 @@ $releaseNotes = Get-Content $changelogFile | Select-Object -First ($log.Count + 
 
 Write-Host "Creando release $Version en GitHub..."
 gh release create $Version `
-  systeminfoGo.exe systeminfoGo `
+  build/systeminfoGo.exe build/systeminfoGo `
   --title "$releaseTitle" `
   --notes "$releaseNotes"
 
