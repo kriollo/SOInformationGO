@@ -108,6 +108,7 @@ go build -o systeminfo main.go
 5. **(Opcional) Compila el ejecutable:**
    ```bash
    go build -o systeminfo main.go
+   chmod +x  systeminfo
    ./systeminfo
    ```
 
