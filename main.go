@@ -13,7 +13,7 @@ import (
 
 const (
 	AppName = "System Information App"
-	Version = "v1.0.3"
+	Version = "v1.0.4"
 )
 
 func printHumanReadable(info *model.SystemInfo) {

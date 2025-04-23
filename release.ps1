@@ -51,7 +51,7 @@ git push origin $Version
 
 # --- 6. Crear release en GitHub y subir binarios + changelog ---
 $releaseTitle = "Release $Version"
-$releaseNotes = Get-Content $changelogFile | Select-Object -First ($log.Count + 2) | Out-String
+$releaseNotes = "$header`n" + ($log -join "`n")
 
 Write-Host "Creando release $Version en GitHub..."
 gh release create $Version `
