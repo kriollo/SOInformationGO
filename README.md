@@ -1,16 +1,26 @@
 # System Information App
 
-Esta aplicación en Go permite obtener información detallada del sistema donde se ejecuta, incluyendo:
+Aplicación en Go para obtener información detallada del sistema donde se ejecuta. Incluye:
+
 - Nombre del equipo (hostname)
-- Sistema operativo y versión
-- Arquitectura
-- Uptime (tiempo encendido)
-- Fecha/hora de booteo
-- Información de CPU (modelo, núcleos, frecuencia, caché)
+- Sistema operativo, versión y arquitectura
+- Uptime (tiempo encendido) y fecha/hora de booteo
+- Información de CPU (modelo, núcleos físicos/lógicos, frecuencia, caché)
 - Memoria RAM (total, usada, libre)
 - Discos duros (total, usado, libre, tipo de sistema de archivos)
+- IPs activas de las interfaces de red
+- Exportación de la información en formato legible, JSON o archivo TXT
+- Cabecera con versión y autor
+
+## Novedades recientes
+
+- Opción `--json` para exportar la salida en formato JSON
+- Opción `--txt` para exportar la salida legible a un archivo `systeminfo.txt`
+- Detección y listado de IPs activas en las interfaces de red
+- Cabecera con nombre de la app, versión y autor
 
 ## Requisitos
+
 - Go 1.18 o superior
 
 ## Instalación de dependencias
@@ -19,13 +29,14 @@ Esta aplicación en Go permite obtener información detallada del sistema donde 
 go mod tidy
 ```
 
-## Uso
+## Uso rápido
 
 ### Ejecutar directamente (modo desarrollo)
 
-```
+```bash
 go run main.go [--json] [--txt]
 ```
+
 - Sin parámetros: muestra la información en consola en formato legible.
 - `--json`: muestra la información en consola en formato JSON.
 - `--txt`: exporta la información legible al archivo `systeminfo.txt`.
@@ -33,58 +44,121 @@ go run main.go [--json] [--txt]
 ### Compilar para Windows y Linux
 
 #### Para Windows (desde cualquier sistema):
+
 ```sh
 GOOS=windows GOARCH=amd64 go build -o systeminfo.exe main.go
 ```
 
-#### Para Linux (desde Windows o cualquier sistema):
+#### Para Linux (desde cualquier sistema):
+
 ```sh
 GOOS=linux GOARCH=amd64 go build -o systeminfo main.go
 ```
 
 > **En PowerShell de Windows:**
+
 ```powershell
 $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o systeminfo main.go
 $env:GOOS="windows"; $env:GOARCH="amd64"; go build -o systeminfo.exe main.go
 ```
+
 > **En CMD de Windows:**
+
 ```cmd
 set GOOS=linux
 set GOARCH=amd64
 go build -o systeminfo main.go
 ```
 
+---
+
+## Instructivo para ejecutar en Linux
+
+1. **Instala Go** (si no lo tienes):
+
+   - En Ubuntu/Debian:
+     ```bash
+     sudo apt update && sudo apt install golang-go
+     ```
+   - O descarga desde [golang.org/dl](https://golang.org/dl/)
+
+2. **Clona el repositorio o copia los archivos fuente**:
+
+   ```bash
+   git clone <URL-del-repo>
+   cd systemInformation
+   ```
+
+3. **Instala las dependencias:**
+
+   ```bash
+   go mod tidy
+   ```
+
+4. **Ejecuta la app:**
+
+   ```bash
+   go run main.go
+   # o para salida JSON
+   go run main.go --json
+   # o para exportar a TXT
+   go run main.go --txt
+   ```
+
+5. **(Opcional) Compila el ejecutable:**
+   ```bash
+   go build -o systeminfo main.go
+   ./systeminfo
+   ```
+
+---
+
 El ejecutable generado (`systeminfo.exe` o `systeminfo`) puede copiarse y ejecutarse en cualquier máquina del sistema objetivo.
 
 ## Ejemplo de salida
 
 ```
-Hostname: DESKTOP-B0EF0LU
-OS: windows
-Platform: Microsoft Windows 11 Pro 24H2
+=============================================================
+  System Information App       |  Versión v1.0.3
+  Desarrollado por jorge Jara  |  https://github.com/kriollo
+=============================================================
+
+Hostname: TU-HOSTNAME
+OS: linux
+Platform: Ubuntu 22.04
 Arch: x86_64
-Uptime: 1d 2h 29m 51s
-Boot Time: 2025-04-22 09:54:04
+Kernel: 6.5.0-27-generic
+Uptime: 2d 3h 15m 42s
+Boot Time: 2025-04-21 13:05:01
 
 CPU Info:
-  Model: AMD Ryzen 7 4700U with Radeon Graphics         , Cores: 8, Mhz: 2000.00, Cache Size: 0 B
-  Logical CPUs: 8
+  Modelo         : Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+  Cores físicos  : 4
+  Cores lógicos  : 8
+  Frecuencia     : 1992.00 MHz
+  Cache          : 6.00 MB
 
 Memory:
-  Total: 31.36 GB
-  Used: 15.66 GB
-  Free: 15.70 GB
+  Total: 15.57 GB
+  Used: 7.23 GB
+  Free: 8.34 GB
 
 Disk(s):
-  Mount: C:, Total: 444.91 GB, Used: 299.27 GB, Free: 145.64 GB, FS: 
-  Mount: E:, Total: 29.81 GB, Used: 25.67 GB, Free: 4.14 GB, FS: 
+  /              100.00 GB   45.00 GB    55.00 GB   ext4
+  /home          400.00 GB   120.00 GB   280.00 GB  ext4
+
+IPs activas:
+  Interfaz                 IP
+  eth0                     192.168.1.100
+  wlan0                    192.168.1.101
 ```
 
 ## Notas
+
 - La información de usuarios activos no está disponible en gopsutil v4.
 - El formato de tiempo y bytes es amigable para humanos.
 - Puedes modificar el código para agregar más detalles si lo requieres.
 
 ---
 
-**Autor:** Tu Nombre
+**Autor:** Jorge Jara

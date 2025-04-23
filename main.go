@@ -17,7 +17,7 @@ import (
 
 const (
 	AppName = "System Information App"
-	Version = "v1.0.2"
+	Version = "v1.0.3"
 )
 
 type NetIPInfo struct {
@@ -235,10 +235,10 @@ func humanBootTime(boot uint64) string {
 }
 
 func main() {
-	fmt.Printf("\n============================================\n")
+	fmt.Printf("\n=============================================================\n")
 	fmt.Printf("  %s  |  Versión %s\n", AppName, Version)
-	fmt.Printf("  Desarrollado por jjara  |  https://github.com/jjara\n")
-	fmt.Printf("============================================\n\n")
+	fmt.Printf("  Desarrollado por jorge Jara  |  https://github.com/kriollo\n")
+	fmt.Printf("=============================================================\n\n")
 
 	jsonFlag := flag.Bool("json", false, "Exportar salida en formato JSON")
 	txtFlag := flag.Bool("txt", false, "Exportar salida legible a systeminfo.txt")
