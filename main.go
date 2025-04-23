@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"io"
+	"net"
+	"os"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -14,12 +15,18 @@ import (
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
+type NetIPInfo struct {
+	Interface string `json:"interface"`
+	IP        string `json:"ip"`
+}
+
 type SystemInfo struct {
 	Hostname    string                 `json:"hostname"`
 	OS          string                 `json:"os"`
 	Platform    string                 `json:"platform"`
 	PlatformVer string                 `json:"platform_version"`
 	Arch        string                 `json:"arch"`
+	IPs         []NetIPInfo            `json:"ips"`
 	CPU         []cpu.InfoStat         `json:"cpu"`
 	CPUTimes    []cpu.TimesStat        `json:"cpu_times"`
 	CPUCores    int                    `json:"cpu_cores"`
@@ -62,12 +69,49 @@ func getSystemInfo() (*SystemInfo, error) {
 		}
 	}
 
+	// Obtener IPs activas (no loopback)
+	ips := []NetIPInfo{}
+	ifaces, err := net.Interfaces()
+	if err == nil {
+		for _, iface := range ifaces {
+			if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+				continue
+			}
+			addrs, err := iface.Addrs()
+			if err != nil {
+				continue
+			}
+			for _, addr := range addrs {
+				var ip net.IP
+				switch v := addr.(type) {
+				case *net.IPNet:
+					ip = v.IP
+				case *net.IPAddr:
+					ip = v.IP
+				}
+				if ip == nil || ip.IsLoopback() {
+					continue
+				}
+				ipstr := ""
+				if ip4 := ip.To4(); ip4 != nil {
+					ipstr = ip4.String()
+				} else if ip6 := ip.To16(); ip6 != nil {
+					ipstr = ip6.String()
+				}
+				if ipstr != "" {
+					ips = append(ips, NetIPInfo{Interface: iface.Name, IP: ipstr})
+				}
+			}
+		}
+	}
+
 	return &SystemInfo{
 		Hostname:    hostInfo.Hostname,
 		OS:          hostInfo.OS,
 		Platform:    hostInfo.Platform,
 		PlatformVer: hostInfo.PlatformVersion,
 		Arch:        hostInfo.KernelArch,
+		IPs:         ips,
 		CPU:         cpuInfo,
 		CPUTimes:    cpuTimes,
 		CPUCores:    cpuCores,
@@ -87,6 +131,7 @@ func writeHumanReadable(w io.Writer, info *SystemInfo) {
 	fmt.Fprintf(w, "OS: %s\n", info.OS)
 	fmt.Fprintf(w, "Platform: %s %s\n", info.Platform, info.PlatformVer)
 	fmt.Fprintf(w, "Arch: %s\n", info.Arch)
+
 	fmt.Fprintf(w, "Uptime: %s\n", humanDuration(info.Uptime))
 	fmt.Fprintf(w, "Boot Time: %s\n", humanBootTime(info.BootTime))
 	fmt.Fprintf(w, "\nCPU Info:\n")
@@ -101,6 +146,13 @@ func writeHumanReadable(w io.Writer, info *SystemInfo) {
 	fmt.Fprintf(w, "\nDisk(s):\n")
 	for _, d := range info.Disk {
 		fmt.Fprintf(w, "  Mount: %s, Total: %s, Used: %s, Free: %s, FS: %s\n", d.Path, humanBytes(d.Total), humanBytes(d.Used), humanBytes(d.Free), d.Fstype)
+	}
+
+	if len(info.IPs) > 0 {
+		fmt.Fprintf(w, "\nIPs activas:\n")
+		for _, nip := range info.IPs {
+			fmt.Fprintf(w, "  %s: %s\n", nip.Interface, nip.IP)
+		}
 	}
 }
 
@@ -171,5 +223,8 @@ func main() {
 		fmt.Println("Información guardada en systeminfo.txt")
 	} else {
 		printHumanReadable(info)
+		fmt.Print("\nPresione ENTER para continuar...")
+		var input string
+		fmt.Scanln(&input)
 	}
 }
